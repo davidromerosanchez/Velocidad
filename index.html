@@ -51,8 +51,11 @@
       const entrada = `${estado} ${hora} el ${fecha}`;
 
       const historial = JSON.parse(localStorage.getItem("historialConexion") || "[]");
-      historial.unshift(entrada);
-      localStorage.setItem("historialConexion", JSON.stringify(historial.slice(0, 10)));
+      if (historial.length === 0 || !historial[0].startsWith(estado)) {
+        historial.unshift(entrada);
+        localStorage.setItem("historialConexion", JSON.stringify(historial.slice(0, 10)));
+      }
+
       mostrarHistorial();
     }
 
@@ -67,19 +70,45 @@
       mensaje.textContent = "Comprobando conexión…";
       mensaje.style.animation = "parpadeo 1s infinite";
 
-      fetch("https://1.1.1.1/cdn-cgi/trace")
+      let confirmado = false;
+
+      // Seguridad: si no hay respuesta en 5 segundos, asumimos sin conexión
+      const timeout = setTimeout(() => {
+        if (!confirmado) {
+          mensaje.textContent = "❌ Sin conexión (no se recibió confirmación)";
+          mensaje.style.animation = "none";
+          guardarHistorial("Sin conexión");
+        }
+      }, 5000);
+
+      // Si el navegador ya detecta que no hay red, lo marcamos directamente
+      if (!navigator.onLine) {
+        clearTimeout(timeout);
+        mensaje.textContent = "❌ Sin conexión (modo offline)";
+        mensaje.style.animation = "none";
+        guardarHistorial("Sin conexión");
+        return;
+      }
+
+      fetch("https://1.1.1.1/cdn-cgi/trace", { cache: "no-store" })
         .then(res => {
           if (res.ok) {
+            confirmado = true;
+            clearTimeout(timeout);
             mensaje.textContent = "✅ Conexión detectada";
             mensaje.style.animation = "none";
             guardarHistorial("Conexión");
           } else {
+            confirmado = true;
+            clearTimeout(timeout);
             mensaje.textContent = "❌ Sin respuesta válida";
             mensaje.style.animation = "none";
             guardarHistorial("Sin conexión");
           }
         })
         .catch(() => {
+          confirmado = true;
+          clearTimeout(timeout);
           mensaje.textContent = "❌ Sin conexión";
           mensaje.style.animation = "none";
           guardarHistorial("Sin conexión");
