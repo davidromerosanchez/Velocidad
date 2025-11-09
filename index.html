@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test de conexión</title>
+  <style>
+    body {
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
+      text-align: center;
+      padding-top: 50px;
+    }
+    h1 {
+      color: #00ffcc;
+    }
+    .status {
+      font-size: 1.5em;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌐 Estado de conexión</h1>
+  <div class="status">Comprobando conexión...</div>
+
+  <script>
+    async function testConnection() {
+      const status = document.querySelector('.status');
+      const testUrl = "https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_92x30dp.png";
+      const sizeMB = 0.008; // tamaño aproximado en MB
+
+      const start = performance.now();
+      try {
+        const response = await fetch(testUrl, {cache: "no-store"});
+        if (!response.ok) throw new Error("No response");
+        await response.blob(); // asegura que se descargue
+        const end = performance.now();
+        const time = (end - start) / 1000; // segundos
+        const speed = sizeMB / time; // MB/s
+
+        if (speed < 0.15) {
+          status.textContent = `✅ Conectado a ${speed.toFixed(2)} MB/s – modo metro activado 🚇`;
+        } else {
+          status.textContent = `✅ Conectado a ${speed.toFixed(2)} MB/s – velocidad aceptable ⚡`;
+        }
+      } catch (e) {
+        status.textContent = "❌ Sin conexión";
+      }
+    }
+
+    testConnection();
+  </script>
+</body>
+</html>
