@@ -1,30 +1,59 @@
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const mensaje = document.createElement("p");
-    mensaje.textContent = "Comprobando conexión...";
-    document.body.appendChild(mensaje);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>🌐 Estado de conexión</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: monospace;
+      text-align: center;
+      padding: 50px;
+    }
+    .mensaje {
+      font-size: 1.5rem;
+      animation: parpadeo 1s infinite;
+    }
+    @keyframes parpadeo {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mensaje">Comprobando conexión…</div>
 
+  <script>
+    const mensaje = document.querySelector(".mensaje");
     const inicio = performance.now();
-    fetch("https://speed.hetzner.de/1MB.bin") // archivo pequeño y confiable
-        .then(res => res.blob())
-        .then(() => {
-            const fin = performance.now();
-            const tiempo = (fin - inicio) / 1000;
-            const velocidad = (1 / tiempo).toFixed(2); // MB/s
-            let estado = `✅ Conectado a ${velocidad} MB/s`;
 
-            if (velocidad < 0.2) {
-                estado += " – modo metro activado 🚇";
-            } else if (velocidad < 1) {
-                estado += " – velocidad baja 🐢";
-            } else {
-                estado += " – velocidad aceptable ⚡";
-            }
+    fetch("https://speed.hetzner.de/1MB.bin", { method: "GET", cache: "no-store" })
+      .then(res => res.blob())
+      .then(() => {
+        const fin = performance.now();
+        const tiempo = (fin - inicio) / 1000;
+        const velocidad = (1 / tiempo).toFixed(2); // MB/s
 
-            mensaje.textContent = estado;
-        })
-        .catch(() => {
-            mensaje.textContent = "❌ Sin conexión";
-        });
-});
-</script>
+        let estado = `✅ Conectado a ${velocidad} MB/s`;
+
+        if (velocidad < 0.05) {
+          estado += " – conexión mínima 🕳️";
+        } else if (velocidad < 0.2) {
+          estado += " – modo metro activado 🚇";
+        } else if (velocidad < 1) {
+          estado += " – velocidad baja 🐢";
+        } else {
+          estado += " – velocidad aceptable ⚡";
+        }
+
+        mensaje.textContent = estado;
+        mensaje.style.animation = "none";
+      })
+      .catch(() => {
+        mensaje.textContent = "❌ Sin conexión";
+        mensaje.style.animation = "none";
+      });
+  </script>
+</body>
+</html>
