@@ -67,17 +67,34 @@
       mensaje.textContent = "Comprobando conexión…";
       mensaje.style.animation = "parpadeo 1s infinite";
 
-      fetch("https://1.1.1.1/cdn-cgi/trace")
+      const inicio = performance.now();
+      fetch("https://ipv4.download.thinkbroadband.com/100KB.zip", { method: "GET", cache: "no-store" })
         .then(res => {
-          if (res.ok) {
-            mensaje.textContent = "✅ Conexión detectada";
-            mensaje.style.animation = "none";
-            guardarHistorial("Conexión");
+          if (!res.ok) throw new Error("Respuesta no válida");
+          return res.blob();
+        })
+        .then(() => {
+          const fin = performance.now();
+          const tiempo = (fin - inicio) / 1000;
+          const velocidad = (0.1 / tiempo).toFixed(2); // 0.1 MB = 100 KB
+
+          let estado = `Conexión a ${velocidad} MB/s`;
+
+          if (velocidad < 0.005) {
+            estado += " – conexión fantasma 👻";
+          } else if (velocidad < 0.05) {
+            estado += " – conexión mínima 🕳️";
+          } else if (velocidad < 0.2) {
+            estado += " – modo metro activado 🚇";
+          } else if (velocidad < 1) {
+            estado += " – velocidad baja 🐢";
           } else {
-            mensaje.textContent = "❌ Sin respuesta válida";
-            mensaje.style.animation = "none";
-            guardarHistorial("Sin conexión");
+            estado += " – velocidad aceptable ⚡";
           }
+
+          mensaje.textContent = `✅ ${estado}`;
+          mensaje.style.animation = "none";
+          guardarHistorial(`Conexión (${velocidad} MB/s)`);
         })
         .catch(() => {
           mensaje.textContent = "❌ Sin conexión";
