@@ -9,11 +9,28 @@
       color: #0f0;
       font-family: monospace;
       text-align: center;
-      padding: 50px;
+      padding: 40px;
     }
     .mensaje {
       font-size: 1.5rem;
       animation: parpadeo 1s infinite;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #0f0;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      font-family: monospace;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .historial {
+      text-align: left;
+      max-width: 400px;
+      margin: 0 auto;
+      font-size: 0.9rem;
+      color: #aaa;
     }
     @keyframes parpadeo {
       0%, 100% { opacity: 1; }
@@ -23,37 +40,52 @@
 </head>
 <body>
   <div class="mensaje">Comprobando conexión…</div>
+  <button onclick="testearConexion()">Repetir test</button>
+  <div class="historial" id="historial"></div>
 
   <script>
-    const mensaje = document.querySelector(".mensaje");
-    const inicio = performance.now();
+    function guardarHistorial(estado) {
+      const ahora = new Date();
+      const hora = ahora.toLocaleTimeString("es-ES", { hour: '2-digit', minute: '2-digit' });
+      const fecha = ahora.toLocaleDateString("es-ES");
+      const entrada = `${estado} ${hora} el ${fecha}`;
 
-    fetch("https://speed.hetzner.de/1MB.bin", { method: "GET", cache: "no-store" })
-      .then(res => res.blob())
-      .then(() => {
-        const fin = performance.now();
-        const tiempo = (fin - inicio) / 1000;
-        const velocidad = (1 / tiempo).toFixed(2); // MB/s
+      const historial = JSON.parse(localStorage.getItem("historialConexion") || "[]");
+      historial.unshift(entrada);
+      localStorage.setItem("historialConexion", JSON.stringify(historial.slice(0, 10))); // máximo 10 entradas
+      mostrarHistorial();
+    }
 
-        let estado = `✅ Conectado a ${velocidad} MB/s`;
+    function mostrarHistorial() {
+      const historial = JSON.parse(localStorage.getItem("historialConexion") || "[]");
+      const contenedor = document.getElementById("historial");
+      contenedor.innerHTML = "<strong>📜 Historial:</strong><br>" + historial.map(e => "• " + e).join("<br>");
+    }
 
-        if (velocidad < 0.05) {
-          estado += " – conexión mínima 🕳️";
-        } else if (velocidad < 0.2) {
-          estado += " – modo metro activado 🚇";
-        } else if (velocidad < 1) {
-          estado += " – velocidad baja 🐢";
-        } else {
-          estado += " – velocidad aceptable ⚡";
-        }
+    function testearConexion() {
+      const mensaje = document.querySelector(".mensaje");
+      mensaje.textContent = "Comprobando conexión…";
+      mensaje.style.animation = "parpadeo 1s infinite";
 
-        mensaje.textContent = estado;
-        mensaje.style.animation = "none";
-      })
-      .catch(() => {
-        mensaje.textContent = "❌ Sin conexión";
-        mensaje.style.animation = "none";
-      });
+      fetch("https://example.com", { method: "HEAD", mode: "no-cors" })
+        .then(() => {
+          const estado = "Conexión";
+          mensaje.textContent = `✅ ${estado} detectada`;
+          mensaje.style.animation = "none";
+          guardarHistorial(estado);
+        })
+        .catch(() => {
+          const estado = "Sin conexión";
+          mensaje.textContent = `❌ ${estado}`;
+          mensaje.style.animation = "none";
+          guardarHistorial(estado);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      testearConexion();
+      mostrarHistorial();
+    });
   </script>
 </body>
 </html>
